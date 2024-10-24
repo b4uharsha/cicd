@@ -7,28 +7,18 @@ pipeline {
     }
 
     stages {
-        stage('Check GCP Service Account') {
+        stage('Install Ansible 2.12 from PPA') {
             steps {
                 script {
-                    // Activate GCP service account and check access
+                    // Install Ansible from the official Ansible repository
                     sh '''
-                        echo "Activating default GCP service account"
-                        gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-                        gcloud projects describe $(gcloud config get-value project)
-                    '''
-                }
-            }
-        }
-
-        stage('Downgrade Ansible to 2.12.x') {
-            steps {
-                script {
-                    // Downgrade Ansible to version 2.12.x
-                    sh '''
-                        echo "Downgrading Ansible to version 2.12.0"
-                        pip install ansible==2.12.0
+                        echo "Installing Ansible 2.12.x"
+                        sudo apt-get update
+                        sudo apt-get install -y software-properties-common
+                        sudo add-apt-repository --yes --update ppa:ansible/ansible
+                        sudo apt-get install -y ansible=2.12.0*
                         
-                        # Verify the Ansible version
+                        # Verify the installed version of Ansible
                         ansible --version
                     '''
                 }
@@ -38,7 +28,7 @@ pipeline {
         stage('Install Python Dependencies') {
             steps {
                 script {
-                    // Install required Python libraries (requests, google-auth, etc.)
+                    // Install required Python libraries
                     sh '''
                         echo "Installing required Python libraries..."
                         pip3 install --no-cache-dir requests google-auth google-auth-oauthlib google-api-python-client
@@ -76,33 +66,6 @@ pipeline {
                         // Run the Ansible playbook with the tag for BigQuery operations
                         sh 'ansible-playbook -i inventory playbook.yml --tags "bq_operations"'
                     }
-                }
-            }
-        }
-
-        stage('Print Environment Versions') {
-            steps {
-                script {
-                    // Print the versions of key environment tools
-                    sh '''
-                        echo "Java version:"
-                        java -version || echo "Java not installed"
-                        
-                        echo "Ansible version:"
-                        ansible --version || echo "Ansible not installed"
-
-                        echo "Ansible Galaxy version:"
-                        ansible-galaxy --version || echo "Ansible Galaxy not installed"
-
-                        echo "Python version:"
-                        python3 --version || echo "Python not installed"
-
-                        echo "gcloud version:"
-                        gcloud --version || echo "gcloud not installed"
-
-                        echo "OS version:"
-                        cat /etc/os-release || echo "OS information not available"
-                    '''
                 }
             }
         }
