@@ -8,7 +8,18 @@
     loop: "{{ gcp_zones }}"
     register: vm_info_per_zone
   
-  - name: "Show the virtual machines from all zones"
+  - name: "Show the virtual machines with specific details"
     debug:
-      var: vm_info_per_zone
+      msg: |
+        {% for zone_result in vm_info_per_zone.results %}
+          {% for vm in zone_result.resources %}
+            NAME: {{ vm.name }}
+            ZONE: {{ vm.zone }}
+            MACHINE_TYPE: {{ vm.machineType | regex_replace('.*machineTypes/', '') }}
+            PREEMPTIBLE: {{ vm.scheduling.preemptible }}
+            INTERNAL_IP: {{ vm.networkInterfaces[0].networkIP }}
+            EXTERNAL_IP: {{ vm.networkInterfaces[0].accessConfigs[0].natIP | default('N/A') }}
+            STATUS: {{ vm.status }}
+          {% endfor %}
+        {% endfor %}
   
