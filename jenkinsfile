@@ -4,7 +4,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the source code from the repository
                 echo 'Checking out source code from GitHub...'
                 checkout scm
             }
@@ -13,7 +12,6 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                // Example of a build step, replace with actual commands (e.g., npm install, mvn package)
                 sh 'echo "Simulating build process"'
             }
         }
@@ -21,7 +19,6 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                // Example of running tests, replace with actual test command (e.g., npm test, mvn test)
                 sh 'echo "Simulating test process"'
             }
         }
@@ -29,8 +26,24 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying the project...'
-                // Example of deployment step, replace with actual deployment commands
                 sh 'echo "Simulating deployment process"'
+            }
+        }
+
+        stage('Environment Info') {
+            steps {
+                echo 'Displaying environment information...'
+                // Show Java version
+                sh 'java -version'
+                
+                // Show Ansible version
+                sh 'ansible --version'
+                
+                // Show Jenkins version
+                sh 'jenkins --version || echo "Jenkins version command may vary depending on setup"'
+                
+                // Show disk space
+                sh 'df -h'
             }
         }
     }
@@ -38,7 +51,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up workspace...'
-            deleteDir() // Clean up the workspace after the pipeline
+            deleteDir()
         }
 
         success {
@@ -50,6 +63,3 @@ pipeline {
         }
     }
 }
-
-
-
