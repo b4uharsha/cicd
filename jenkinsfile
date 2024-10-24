@@ -2,49 +2,17 @@ pipeline {
     agent any
 
     environment {
-        // Google Cloud service account credentials
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') 
-        TERRAFORM_SA_KEY = credentials('terraform-sa-key')  // Terraform service account key
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')
+        TERRAFORM_SA_KEY = credentials('terraform-sa-key')
     }
 
     stages {
-
         stage('Check GCP Service Account') {
             steps {
                 script {
-                    // Check if the default GCP service account can authenticate
                     sh '''
                         echo "Activating default GCP service account"
                         gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-                        echo "Verifying access to GCP project"
-                        gcloud projects describe $(gcloud config get-value project)
-                    '''
-                }
-            }
-        }
-
-        stage('Enable APIs (Optional)') {
-            steps {
-                script {
-                    // Enable necessary Google Cloud APIs
-                    sh '''
-                        echo "Enabling necessary GCP APIs"
-                        gcloud services enable cloudresourcemanager.googleapis.com --project=$(gcloud config get-value project)
-                    '''
-                }
-            }
-        }
-
-        stage('Use Terraform Service Account') {
-            steps {
-                script {
-                    // Activate the Terraform service account
-                    sh '''
-                        echo "Activating Terraform service account: terraform-sa@testcicd-436812.iam.gserviceaccount.com"
-                        gcloud auth activate-service-account terraform-sa@testcicd-436812.iam.gserviceaccount.com --key-file="$TERRAFORM_SA_KEY"
-                        
-                        # Verify that the service account is active and has access
-                        echo "Verifying access to GCP project with Terraform service account"
                         gcloud projects describe $(gcloud config get-value project)
                     '''
                 }
@@ -66,13 +34,12 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        // Run the Ansible playbook to list GCP resources using Terraform SA
-                        sh 'ansible-playbook playbook.yml'
+                        // Run the Ansible playbook with the inventory file
+                        sh 'ansible-playbook -i inventory playbook.yml'
                     }
                 }
             }
         }
-
     }
 
     post {

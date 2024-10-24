@@ -4,7 +4,6 @@
       project: "{{ gcp_project }}"
       auth_kind: serviceaccount
       service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
-      filters: "{{ gcp_service_account_filters }}"
     register: sa_info
   
   - name: "Show the service accounts"
@@ -16,7 +15,6 @@
       project: "{{ gcp_project }}"
       auth_kind: serviceaccount
       service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
-      filters: "{{ gcp_compute_filters }}"
       zone: "{{ gcp_zone }}"
     register: vm_info
   
