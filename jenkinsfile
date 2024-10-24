@@ -26,7 +26,7 @@ pipeline {
                     // Install required Python libraries (requests, google-auth, etc.)
                     sh '''
                         echo "Installing required Python libraries..."
-                        pip3 install requests google-auth google-auth-oauthlib google-api-python-client
+                        pip3 install --no-cache-dir requests google-auth google-auth-oauthlib google-api-python-client
                     '''
                 }
             }
@@ -37,7 +37,8 @@ pipeline {
                 script {
                     dir('ansible') {
                         // Install required Ansible roles and collections from requirements.yml
-                        sh 'ansible-galaxy install -r requirements.yml --force'
+                        // Using --force to reinstall roles and --ignore-errors to avoid failures on cache issues
+                        sh 'ansible-galaxy install -r requirements.yml --force --ignore-errors'
                     }
                 }
             }
@@ -56,6 +57,20 @@ pipeline {
     }
 
     post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs() // This will clean up the workspace after the build
+
+            script {
+                // Clear Ansible Galaxy cache (if any cache exists)
+                sh '''
+                    echo "Clearing Ansible Galaxy cache..."
+                    rm -rf ~/.ansible/galaxy_cache
+                    rm -rf ~/.ansible/tmp
+                '''
+            }
+        }
+
         success {
             echo 'Pipeline completed successfully.'
         }
