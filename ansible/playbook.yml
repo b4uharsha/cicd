@@ -1,8 +1,18 @@
 ---
-  - name: "List Service Accounts and VMs in GCP"
+  - name: "GCP and BigQuery Operations Playbook"
     hosts: localhost
     gather_facts: no
+    tasks:
   
-    roles:
-      - gcp_list_resources
+      - name: "List GCP resources (VMs, Service Accounts, etc.)"
+        include_role:
+          name: gcp_list_resources
+        tags: 
+          - gcp_list_resources
+  
+      - name: "BigQuery Operations (Dataset/Table Creation)"
+        include_role:
+          name: bq_operations
+        tags: 
+          - bq_operations
   
