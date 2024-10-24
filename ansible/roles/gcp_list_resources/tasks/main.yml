@@ -1,21 +1,9 @@
 ---
-  - name: "List all service accounts in the project"
-    gcp_iam_service_account_info:
-      project: "{{ gcp_project }}"
-      auth_kind: serviceaccount
-      service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
-    register: sa_info
-  
-  - name: "Show the service accounts"
-    debug:
-      var: sa_info
-  
-  - name: "List all VMs in the project"
+  - name: "List all VMs in the project across all zones"
     gcp_compute_instance_info:
       project: "{{ gcp_project }}"
       auth_kind: serviceaccount
       service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
-      zone: "{{ gcp_zone }}"
     register: vm_info
   
   - name: "Show the virtual machines"

@@ -1,2 +1,2 @@
 gcp_project: "testcicd-436812"
-gcp_zone: "europe-west2-b"
+gcp_zone: "europe-west2-b"  # Correct zone where the VM is located
