@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        // Execute playbook to list GCP resources (VMs, Service Accounts, etc.)
+                        // Run the Ansible playbook with the tag to list GCP resources
                         sh 'ansible-playbook -i inventory playbook.yml --tags "gcp_list_resources"'
                     }
                 }
@@ -58,127 +58,7 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        // Execute playbook to handle BigQuery operations (e.g., dataset/table creation)
-                        sh 'ansible-playbook -i inventory playbook.yml --tags "bq_operations"'
-                    }
-                }
-            }
-        }
-
-        stage('Print Environment Versions') {
-            steps {
-                script {
-                    // Print the versions of key environment tools
-                    sh '''
-                        echo "Java version:"
-                        java -version || echo "Java not installed"
-                        
-                        echo "Ansible version:"
-                        ansible --version || echo "Ansible not installed"
-
-                        echo "Ansible Galaxy version:"
-                        ansible-galaxy --version || echo "Ansible Galaxy not installed"
-
-                        echo "Python version:"
-                        python3 --version || echo "Python not installed"
-
-                        echo "gcloud version:"
-                        gcloud --version || echo "gcloud not installed"
-
-                        echo "OS version:"
-                        cat /etc/os-release || echo "OS information not available"
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            // Cleaning up workspace after printing versions
-            echo 'Cleaning up workspace...'
-            cleanWs() // This will clean up the workspace after the build
-
-            script {
-                // Clear Ansible Galaxy cache (if any cache exists)
-                sh '''
-                    echo "Clearing Ansible Galaxy cache..."
-                    rm -rf ~/.ansible/galaxy_cache
-                    rm -rf ~/.ansible/tmp
-                '''
-            }
-        }
-
-        success {
-            echo 'Pipeline completed successfully.'
-        }
-
-        failure {
-            echo 'Pipeline failed. Check the logs for details.'
-        }
-    }
-}
-pipeline {
-    agent any
-
-    environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')
-        TERRAFORM_SA_KEY = credentials('terraform-sa-key')
-    }
-
-    stages {
-        stage('Check GCP Service Account') {
-            steps {
-                script {
-                    // Activate GCP service account and check access
-                    sh '''
-                        echo "Activating default GCP service account"
-                        gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-                        gcloud projects describe $(gcloud config get-value project)
-                    '''
-                }
-            }
-        }
-
-        stage('Install Python Dependencies') {
-            steps {
-                script {
-                    // Install required Python libraries (requests, google-auth, etc.)
-                    sh '''
-                        echo "Installing required Python libraries..."
-                        pip3 install --no-cache-dir requests google-auth google-auth-oauthlib google-api-python-client
-                    '''
-                }
-            }
-        }
-
-        stage('Ansible Setup') {
-            steps {
-                script {
-                    dir('ansible') {
-                        // Install required Ansible roles and collections from requirements.yml
-                        sh 'ansible-galaxy install -r requirements.yml --force --ignore-errors'
-                    }
-                }
-            }
-        }
-
-        stage('List GCP Resources') {
-            steps {
-                script {
-                    dir('ansible') {
-                        // Execute playbook to list GCP resources (VMs, Service Accounts, etc.)
-                        sh 'ansible-playbook -i inventory playbook.yml --tags "gcp_list_resources"'
-                    }
-                }
-            }
-        }
-
-        stage('BigQuery Operations') {
-            steps {
-                script {
-                    dir('ansible') {
-                        // Execute playbook to handle BigQuery operations (e.g., dataset/table creation)
+                        // Run the Ansible playbook with the tag for BigQuery operations
                         sh 'ansible-playbook -i inventory playbook.yml --tags "bq_operations"'
                     }
                 }
