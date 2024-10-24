@@ -1,0 +1,5 @@
+gcp_project: "testcicd-436812"
+gcp_zones:
+  - "europe-west2-a"
+  - "europe-west2-b"
+  - "europe-west2-c"  # Add other zones as needed

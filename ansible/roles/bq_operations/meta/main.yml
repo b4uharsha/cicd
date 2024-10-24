@@ -1,0 +1,34 @@
+---
+  - name: "BigQuery Operations"
+    hosts: localhost
+    gather_facts: no
+    tasks:
+      - name: "Create BigQuery Dataset"
+        google.cloud.gcp_bigquery_dataset:
+          project_id: "{{ gcp_project }}"
+          dataset_id: "{{ bq_dataset }}"
+          location: "{{ bq_location }}"
+          description: "This is a sample BigQuery dataset"
+          auth_kind: serviceaccount
+          service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+        register: bq_dataset_result
+  
+      - name: "Create BigQuery Table"
+        google.cloud.gcp_bigquery_table:
+          project_id: "{{ gcp_project }}"
+          dataset_id: "{{ bq_dataset }}"
+          table_id: "{{ bq_table }}"
+          schema: "{{ bq_table_schema }}"
+          description: "Sample table"
+          auth_kind: serviceaccount
+          service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+        register: bq_table_result
+  
+      - name: "Show dataset creation result"
+        debug:
+          var: bq_dataset_result
+  
+      - name: "Show table creation result"
+        debug:
+          var: bq_table_result
+  
