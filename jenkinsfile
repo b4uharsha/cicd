@@ -10,6 +10,7 @@ pipeline {
         stage('Check GCP Service Account') {
             steps {
                 script {
+                    // Activate GCP service account and check access
                     sh '''
                         echo "Activating default GCP service account"
                         gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
