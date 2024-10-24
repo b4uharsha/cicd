@@ -20,6 +20,21 @@ pipeline {
             }
         }
 
+        stage('Downgrade Ansible to 2.12.x') {
+            steps {
+                script {
+                    // Downgrade Ansible to version 2.12.x
+                    sh '''
+                        echo "Downgrading Ansible to version 2.12.0"
+                        pip install ansible==2.12.0
+                        
+                        # Verify the Ansible version
+                        ansible --version
+                    '''
+                }
+            }
+        }
+
         stage('Install Python Dependencies') {
             steps {
                 script {
