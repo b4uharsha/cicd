@@ -2,10 +2,8 @@ pipeline {
     agent any
 
     environment {
-        // The default service account for general operations
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') 
-        // The Terraform service account credentials (stored in Jenkins credentials)
-        TERRAFORM_SA_KEY = credentials('terraform-sa-key') 
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') // General GCP service account
+        TERRAFORM_SA_KEY = credentials('terraform-sa-key') // Terraform service account key
     }
 
     stages {
