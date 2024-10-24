@@ -1,48 +1,23 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'ansible/ansible:2.12.0'  // Specify the Ansible container image version
+            args '-v /path/to/credentials:/path/to/credentials'  // Bind mount for credentials if needed
+        }
+    }
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')
-        TERRAFORM_SA_KEY = credentials('terraform-sa-key')
+        GOOGLE_APPLICATION_CREDENTIALS = '/path/to/credentials/gcp-service-account.json'  // Path inside the container
+        TERRAFORM_SA_KEY = '/path/to/credentials/terraform-sa-key.json'
     }
 
     stages {
-        stage('Install Ansible 2.12 from PPA') {
-            steps {
-                script {
-                    // Install Ansible from the official Ansible repository
-                    sh '''
-                        echo "Installing Ansible 2.12.x"
-                        sudo apt-get update
-                        sudo apt-get install -y software-properties-common
-                        sudo add-apt-repository --yes --update ppa:ansible/ansible
-                        sudo apt-get install -y ansible=2.12.0*
-                        
-                        # Verify the installed version of Ansible
-                        ansible --version
-                    '''
-                }
-            }
-        }
-
-        stage('Install Python Dependencies') {
-            steps {
-                script {
-                    // Install required Python libraries
-                    sh '''
-                        echo "Installing required Python libraries..."
-                        pip3 install --no-cache-dir requests google-auth google-auth-oauthlib google-api-python-client
-                    '''
-                }
-            }
-        }
-
         stage('Ansible Setup') {
             steps {
                 script {
                     dir('ansible') {
-                        // Install required Ansible roles and collections from requirements.yml
-                        sh 'ansible-galaxy install -r requirements.yml --force --ignore-errors'
+                        // Install required Ansible collections from requirements.yml inside the container
+                        sh 'ansible-galaxy install -r requirements.yml --force'
                     }
                 }
             }
@@ -73,18 +48,8 @@ pipeline {
 
     post {
         always {
-            // Cleaning up workspace after printing versions
-            echo 'Cleaning up workspace...'
-            cleanWs() // This will clean up the workspace after the build
-
-            script {
-                // Clear Ansible Galaxy cache (if any cache exists)
-                sh '''
-                    echo "Clearing Ansible Galaxy cache..."
-                    rm -rf ~/.ansible/galaxy_cache
-                    rm -rf ~/.ansible/tmp
-                '''
-            }
+            // Cleaning up workspace
+            cleanWs()
         }
 
         success {
