@@ -37,7 +37,6 @@ pipeline {
                 script {
                     dir('ansible') {
                         // Install required Ansible roles and collections from requirements.yml
-                        // Using --force to reinstall roles and --ignore-errors to avoid failures on cache issues
                         sh 'ansible-galaxy install -r requirements.yml --force --ignore-errors'
                     }
                 }
@@ -58,6 +57,34 @@ pipeline {
 
     post {
         always {
+            script {
+                // Print the versions of key environment tools before cleanup
+                echo 'Printing environment versions...'
+                sh '''
+                    echo "Java version:"
+                    java -version || echo "Java not installed"
+                    
+                    echo "Ansible version:"
+                    ansible --version || echo "Ansible not installed"
+
+                    echo "Ansible Galaxy version:"
+                    ansible-galaxy --version || echo "Ansible Galaxy not installed"
+
+                    echo "Python version:"
+                    python3 --version || echo "Python not installed"
+
+                    echo "gcloud version:"
+                    gcloud --version || echo "gcloud not installed"
+
+                    echo "OS version:"
+                    cat /etc/os-release || echo "OS information not available"
+
+                    echo "Jenkins version:"
+                    java -jar /var/lib/jenkins/jenkins-cli.jar version || echo "Jenkins CLI not available"
+                '''
+            }
+            
+            // Cleaning up workspace after printing versions
             echo 'Cleaning up workspace...'
             cleanWs() // This will clean up the workspace after the build
 
