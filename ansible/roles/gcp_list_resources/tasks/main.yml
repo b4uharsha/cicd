@@ -1,12 +1,14 @@
 ---
-  - name: "List all VMs in the project across all zones"
+  - name: "List all VMs in the project across specified zones"
     gcp_compute_instance_info:
       project: "{{ gcp_project }}"
       auth_kind: serviceaccount
       service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
-    register: vm_info
+      zone: "{{ item }}"
+    loop: "{{ gcp_zones }}"
+    register: vm_info_per_zone
   
-  - name: "Show the virtual machines"
+  - name: "Show the virtual machines from all zones"
     debug:
-      var: vm_info
+      var: vm_info_per_zone
   
