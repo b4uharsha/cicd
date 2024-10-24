@@ -2,20 +2,34 @@ pipeline {
     agent any
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') // General GCP service account
-        TERRAFORM_SA_KEY = credentials('terraform-sa-key') // Terraform service account key
+        // Google Cloud service account credentials
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') 
+        TERRAFORM_SA_KEY = credentials('terraform-sa-key')  // Terraform service account key
     }
 
     stages {
+
         stage('Check GCP Service Account') {
             steps {
                 script {
                     // Check if the default GCP service account can authenticate
                     sh '''
-                        echo "Activating default service account"
+                        echo "Activating default GCP service account"
                         gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
                         echo "Verifying access to GCP project"
                         gcloud projects describe $(gcloud config get-value project)
+                    '''
+                }
+            }
+        }
+
+        stage('Enable APIs (Optional)') {
+            steps {
+                script {
+                    // Enable necessary Google Cloud APIs
+                    sh '''
+                        echo "Enabling necessary GCP APIs"
+                        gcloud services enable cloudresourcemanager.googleapis.com --project=$(gcloud config get-value project)
                     '''
                 }
             }
@@ -41,7 +55,7 @@ pipeline {
             steps {
                 script {
                     dir('ansible') {
-                        // Install required Ansible dependencies (if any)
+                        // Install required Ansible roles and collections from requirements.yml
                         sh 'ansible-galaxy install -r requirements.yml --force'
                     }
                 }
@@ -58,6 +72,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
@@ -66,7 +81,7 @@ pipeline {
         }
 
         failure {
-            echo 'Pipeline failed.'
+            echo 'Pipeline failed. Check the logs for details.'
         }
     }
 }

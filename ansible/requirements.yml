@@ -1,0 +1,9 @@
+---
+  roles:
+    - src: geerlingguy.nginx
+      version: "3.0.0"
+  
+  collections:
+    - name: community.general
+      version: ">=2.0.0"
+  
