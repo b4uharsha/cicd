@@ -4,7 +4,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the source code from GitHub
+                // Checkout the source code from the repository
+                echo 'Checking out source code from GitHub...'
                 checkout scm
             }
         }
@@ -12,23 +13,40 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                // Add your build steps here, like 'sh "mvn clean install"' or 'npm install'
+                // Example of a build step, replace with actual commands (e.g., npm install, mvn package)
+                sh 'echo "Simulating build process"'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                // Add test execution steps, e.g., 'sh "mvn test"' or 'npm test'
+                // Example of running tests, replace with actual test command (e.g., npm test, mvn test)
+                sh 'echo "Simulating test process"'
             }
         }
 
         stage('Deploy') {
             steps {
                 echo 'Deploying the project...'
-                // Add deployment steps, like copying to servers or deploying to cloud services
+                // Example of deployment step, replace with actual deployment commands
+                sh 'echo "Simulating deployment process"'
             }
         }
     }
-}
 
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            deleteDir() // Clean up the workspace after the pipeline
+        }
+
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
