@@ -95,4 +95,26 @@ pipeline {
 
     post {
         always {
-            // Cleaning up workspace after printi
+            // Cleaning up workspace after printing versions
+            echo 'Cleaning up workspace...'
+            cleanWs() // This will clean up the workspace after the build
+
+            script {
+                // Clear Ansible Galaxy cache (if any cache exists)
+                sh '''
+                    echo "Clearing Ansible Galaxy cache..."
+                    rm -rf ~/.ansible/galaxy_cache
+                    rm -rf ~/.ansible/tmp
+                '''
+            }
+        }
+
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Check the logs for details.'
+        }
+    }
+}
