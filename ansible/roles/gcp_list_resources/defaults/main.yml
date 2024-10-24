@@ -1,0 +1,4 @@
+# GCP project ID and region are updated based on your input
+gcp_project: "testcicd-436812"
+gcp_region: "europe-west2"
+gcp_zone: "europe-west2-a"  # Default zone, you can modify this if needed

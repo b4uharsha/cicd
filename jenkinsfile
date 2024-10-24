@@ -1,65 +1,41 @@
 pipeline {
     agent any
 
+    environment {
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') // Jenkins credential for GCP JSON key
+    }
+
     stages {
-        stage('Checkout') {
+        stage('Ansible Setup') {
             steps {
-                echo 'Checking out source code from GitHub...'
-                checkout scm
+                script {
+                    dir('ansible') {
+                        // Install required Ansible dependencies (if any)
+                        sh 'ansible-galaxy install -r requirements.yml --force'
+                    }
+                }
             }
         }
 
-        stage('Build') {
+        stage('Run Ansible Playbook') {
             steps {
-                echo 'Building the project...'
-                sh 'echo "Simulating build process"'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'Running tests...'
-                sh 'echo "Simulating test process"'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploying the project...'
-                sh 'echo "Simulating deployment process"'
-            }
-        }
-
-        stage('Environment Info') {
-            steps {
-                echo 'Displaying environment information...'
-                // Show Java version
-                sh 'java -version'
-                
-                // Show Ansible version
-                sh 'ansible --version'
-                
-                // Show Jenkins version
-                sh 'jenkins --version || echo "Jenkins version command may vary depending on setup"'
-                
-                // Show disk space
-                sh 'df -h'
+                script {
+                    dir('ansible') {
+                        // Run the Ansible playbook to list GCP resources
+                        sh 'ansible-playbook playbook.yml'
+                    }
+                }
             }
         }
     }
 
     post {
-        always {
-            echo 'Cleaning up workspace...'
-            deleteDir()
-        }
-
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline completed successfully.'
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo 'Pipeline failed.'
         }
     }
 }
