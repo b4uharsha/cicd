@@ -20,6 +20,18 @@ pipeline {
             }
         }
 
+        stage('Install Python Dependencies') {
+            steps {
+                script {
+                    // Install required Python libraries (requests, google-auth, etc.)
+                    sh '''
+                        echo "Installing required Python libraries..."
+                        pip3 install requests google-auth google-auth-oauthlib google-api-python-client
+                    '''
+                }
+            }
+        }
+
         stage('Ansible Setup') {
             steps {
                 script {
