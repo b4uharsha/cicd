@@ -2,7 +2,6 @@ pipeline {
     agent {
         docker {
             image 'ansible/ansible:2.12.0'  // Specify the Ansible container image version
-            args '-v /path/to/credentials:/path/to/credentials'  // Bind mount for credentials if needed
         }
     }
 
