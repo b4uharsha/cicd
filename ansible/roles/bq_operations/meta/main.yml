@@ -1,0 +1,7 @@
+# Metadata for BigQuery operations role
+galaxy_info:
+  author: your_name
+  description: Role to manage BigQuery operations
+  company: your_company
+  license: MIT
+dependencies: []

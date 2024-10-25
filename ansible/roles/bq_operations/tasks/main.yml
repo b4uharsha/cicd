@@ -1,0 +1,106 @@
+---
+# Verify required variables for multiple datasets
+- name: Verify variables
+  debug:
+    msg:
+      - "Base Dataset Name: {{ base_dataset_name }}"
+      - "Dataset 1 Name: {{ base_dataset_name }}"
+      - "Dataset 2 Name: {{ base_dataset_name }}_2"
+      - "Base Table Name: {{ base_table_name }}"
+      - "Table 1 Name: {{ base_table_name }}"
+      - "Table 2 Name: {{ base_table_name }}_2"
+      - "Project: {{ gcp_project }}"
+      - "Location: {{ location }}"
+  tags: bq_operations
+
+# Create the first BigQuery dataset (using the base name)
+- name: Create BigQuery dataset 1
+  google.cloud.gcp_bigquery_dataset:
+    dataset_reference:
+      dataset_id: "{{ base_dataset_name }}"
+      project_id: "{{ gcp_project }}"
+    location: "{{ location }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+    scopes:
+      - "https://www.googleapis.com/auth/bigquery"
+    state: present
+  register: dataset1_result
+  ignore_errors: true
+  tags: bq_operations
+
+# Display dataset 1 creation result for visibility
+- name: Check dataset 1 creation result
+  debug:
+    var: dataset1_result
+  tags: bq_operations
+
+# Create the first BigQuery table in dataset 1
+- name: Create BigQuery table in dataset 1
+  google.cloud.gcp_bigquery_table:
+    dataset: "{{ base_dataset_name }}"
+    table_reference:
+      dataset_id: "{{ base_dataset_name }}"
+      table_id: "{{ base_table_name }}"
+      project_id: "{{ gcp_project }}"
+    schema:
+      fields: "{{ schema }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+    scopes:
+      - "https://www.googleapis.com/auth/bigquery"
+    state: present
+  register: table1_result
+  tags: bq_operations
+
+# Check table 1 creation result
+- name: Check table 1 creation result
+  debug:
+    var: table1_result
+  tags: bq_operations
+
+# Create the second BigQuery dataset (appending _2 to the base name)
+- name: Create BigQuery dataset 2
+  google.cloud.gcp_bigquery_dataset:
+    dataset_reference:
+      dataset_id: "{{ base_dataset_name }}_2"
+      project_id: "{{ gcp_project }}"
+    location: "{{ location }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+    scopes:
+      - "https://www.googleapis.com/auth/bigquery"
+    state: present
+  register: dataset2_result
+  ignore_errors: true
+  tags: bq_operations
+
+# Display dataset 2 creation result for visibility
+- name: Check dataset 2 creation result
+  debug:
+    var: dataset2_result
+  tags: bq_operations
+
+# Create the second BigQuery table in dataset 2
+- name: Create BigQuery table in dataset 2
+  google.cloud.gcp_bigquery_table:
+    dataset: "{{ base_dataset_name }}_2"
+    table_reference:
+      dataset_id: "{{ base_dataset_name }}_2"
+      table_id: "{{ base_table_name }}_2"
+      project_id: "{{ gcp_project }}"
+    schema:
+      fields: "{{ secondary_schema }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+    scopes:
+      - "https://www.googleapis.com/auth/bigquery"
+    state: present
+  register: table2_result
+  tags: bq_operations
+
+# Check table 2 creation result
+- name: Check table 2 creation result
+  debug:
+    var: table2_result
+  tags: bq_operations

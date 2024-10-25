@@ -1,0 +1,4 @@
+# Test file for BigQuery operations role
+- hosts: localhost
+  roles:
+    - bq_operations

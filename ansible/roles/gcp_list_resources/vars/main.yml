@@ -1,3 +1,0 @@
-# Any specific filters you want to apply for listing resources can be configured here
-gcp_compute_filters: []
-gcp_service_account_filters: []

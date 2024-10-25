@@ -2,38 +2,18 @@ pipeline {
     agent any
 
     environment {
-        // The default service account for general operations
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account') 
-        // The Terraform service account credentials (stored in Jenkins credentials)
-        TERRAFORM_SA_KEY = credentials('terraform-sa-key') 
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')
+        GCP_PROJECT = 'testcicd-436812'
     }
 
     stages {
-        stage('Check GCP Service Account') {
+        stage('Activate GCP Service Account') {
             steps {
                 script {
-                    // Check if the default GCP service account can authenticate
                     sh '''
-                        echo "Activating default service account"
+                        echo "Activating GCP service account"
                         gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-                        echo "Verifying access to GCP project"
-                        gcloud projects describe $(gcloud config get-value project)
-                    '''
-                }
-            }
-        }
-
-        stage('Use Terraform Service Account') {
-            steps {
-                script {
-                    // Activate the Terraform service account
-                    sh '''
-                        echo "Activating Terraform service account: terraform-sa@testcicd-436812.iam.gserviceaccount.com"
-                        gcloud auth activate-service-account terraform-sa@testcicd-436812.iam.gserviceaccount.com --key-file="$TERRAFORM_SA_KEY"
-                        
-                        # Verify that the service account is active and has access
-                        echo "Verifying access to GCP project with Terraform service account"
-                        gcloud projects describe $(gcloud config get-value project)
+                        gcloud projects describe $GCP_PROJECT || { echo "Failed to activate service account"; exit 1; }
                     '''
                 }
             }
@@ -42,20 +22,38 @@ pipeline {
         stage('Ansible Setup') {
             steps {
                 script {
-                    dir('ansible') {
-                        // Install required Ansible dependencies (if any)
-                        sh 'ansible-galaxy install -r requirements.yml --force'
+                    dir("${env.WORKSPACE}/ansible") {
+                        // Check if Ansible is installed
+                        sh '''
+                            command -v ansible > /dev/null 2>&1 || { echo "Ansible not found. Please install Ansible."; exit 1; }
+                        '''
+
+                        // Check if Google Cloud Ansible collection is installed
+                        sh '''
+                            ansible-galaxy collection list | grep "google.cloud" > /dev/null 2>&1 || {
+                                echo "Google Cloud Ansible collection not found. Installing now..."
+                                if [ ! -f requirements.yml ]; then
+                                    echo "---" > requirements.yml
+                                    echo "collections:" >> requirements.yml
+                                    echo "  - name: google.cloud" >> requirements.yml
+                                    echo "    version: 1.0.2" >> requirements.yml
+                                fi
+                                ansible-galaxy install -r requirements.yml --force --ignore-errors || { echo "Failed to install Ansible dependencies"; exit 1; }
+                            }
+                        '''
                     }
                 }
             }
         }
 
-        stage('Run Ansible Playbook') {
+        stage('Run BigQuery Operations with Ansible') {
             steps {
                 script {
-                    dir('ansible') {
-                        // Run the Ansible playbook to list GCP resources using Terraform SA
-                        sh 'ansible-playbook playbook.yml'
+                    dir("${env.WORKSPACE}/ansible") {
+                        sh '''
+                            echo "Running Ansible playbook for BigQuery operations"
+                            ansible-playbook -i inventory/staging/hosts.yml playbook.yml --tags "bq_operations" -vvv || { echo "Ansible BigQuery operations failed"; exit 1; }
+                        '''
                     }
                 }
             }
@@ -63,12 +61,16 @@ pipeline {
     }
 
     post {
+        always {
+            cleanWs()
+        }
+
         success {
             echo 'Pipeline completed successfully.'
         }
 
         failure {
-            echo 'Pipeline failed.'
+            echo 'Pipeline failed. Check the logs for details.'
         }
     }
 }

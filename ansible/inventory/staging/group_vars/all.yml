@@ -1,0 +1,32 @@
+# GCP project and zones configuration for staging
+gcp_project: "testcicd-436812"
+gcp_zones:
+  - "europe-west2-a"
+  - "europe-west2-b"
+  - "europe-west2-c"
+
+# Define the base dataset and table names
+base_dataset_name: "staging_dataset"
+base_table_name: "staging_table"
+
+location: "EU"
+
+# Schema for the first and second tables
+schema:
+  - name: "name"
+    type: "STRING"
+    mode: "REQUIRED"
+  - name: "age"
+    type: "INTEGER"
+    mode: "NULLABLE"
+
+secondary_schema:
+  - name: "first_name"
+    type: "STRING"
+    mode: "REQUIRED"
+  - name: "last_name"
+    type: "STRING"
+    mode: "NULLABLE"
+  - name: "age"
+    type: "INTEGER"
+    mode: "NULLABLE"

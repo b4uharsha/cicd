@@ -1,0 +1,11 @@
+gcp_project: "testcicd-436812"
+dataset_name: "staging_dataset"
+table_name: "staging_table"
+dataset_location: "EU"
+schema:
+  - name: "name"
+    type: "STRING"
+    mode: "REQUIRED"
+  - name: "age"
+    type: "INTEGER"
+    mode: "NULLABLE"
