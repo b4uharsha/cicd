@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Set your Google Cloud Project ID
+PROJECT_ID="testcicd-436812"
+
+# Print table header
+echo -e "Dataset\tRole\tMember Type\tMember"
+
+# List all datasets in the project
+datasets=$(bq ls --project_id=$PROJECT_ID --format=prettyjson | jq -r '.[].datasetReference.datasetId')
+
+# Loop through each dataset and get permissions
+for dataset in $datasets; do
+    # Retrieve dataset permissions
+    access_info=$(bq show --project_id=$PROJECT_ID --format=prettyjson $PROJECT_ID:$dataset | jq -c '.access[]')
+    
+    # Loop through each access entry
+    for entry in $access_info; do
+        # Extract role, member type, and member details
+        role=$(echo $entry | jq -r '.role')
+        member_type=$(echo $entry | jq -r 'keys_unsorted[1]')  # Gets the type of member (e.g., userByEmail, groupByEmail, specialGroup)
+        member=$(echo $entry | jq -r '.["'"$member_type"'"]')
+        
+        # Print in table format
+        echo -e "$dataset\t$role\t$member_type\t$member"
+    done
+done
