@@ -3,25 +3,56 @@
 # Set your Google Cloud Project ID
 PROJECT_ID="testcicd-436812"
 
-# Print table header
-echo -e "Dataset\tRole\tMember Type\tMember"
+# Check if a dataset ID was provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <dataset_id>"
+    exit 1
+fi
 
-# List all datasets in the project
-datasets=$(bq ls --project_id=$PROJECT_ID --format=prettyjson | jq -r '.[].datasetReference.datasetId')
+# Assign the first argument to DATASET_ID
+DATASET_ID=$1
 
-# Loop through each dataset and get permissions
-for dataset in $datasets; do
-    # Retrieve dataset permissions
-    access_info=$(bq show --project_id=$PROJECT_ID --format=prettyjson $PROJECT_ID:$dataset | jq -c '.access[]')
-    
-    # Loop through each access entry
-    for entry in $access_info; do
-        # Extract role, member type, and member details
-        role=$(echo $entry | jq -r '.role')
-        member_type=$(echo $entry | jq -r 'keys_unsorted[1]')  # Gets the type of member (e.g., userByEmail, groupByEmail, specialGroup)
-        member=$(echo $entry | jq -r '.["'"$member_type"'"]')
+echo "Comparing roles for dataset: $DATASET_ID in project: $PROJECT_ID"
+echo
+
+# Fetch project-level IAM bindings
+echo "Fetching project-level IAM bindings..."
+project_permissions=$(gcloud projects get-iam-policy $PROJECT_ID --format=json)
+
+# Fetch dataset-level IAM bindings
+echo "Fetching dataset-level IAM bindings..."
+dataset_permissions=$(bq show --project_id=$PROJECT_ID --format=prettyjson $PROJECT_ID:$DATASET_ID | jq '.access')
+
+# Print headers for comparison output
+printf "%-30s %-30s %-20s %-60s\n" "Scope" "Role" "Member Type" "Member"
+
+# Compare project-level roles
+if [ -z "$project_permissions" ]; then
+    echo "Error: Failed to retrieve project-level permissions."
+else
+    echo "$project_permissions" | jq -c '.bindings[]' | while read -r row; do
+        role=$(echo "$row" | jq -r '.role')
+        members=$(echo "$row" | jq -c '.members[]')
         
-        # Print in table format
-        echo -e "$dataset\t$role\t$member_type\t$member"
+        for member in $members; do
+            member_type=$(echo "$member" | cut -d: -f1)
+            member_name=$(echo "$member" | cut -d: -f2-)
+            printf "%-30s %-30s %-20s %-60s\n" "Project-Level" "$role" "$member_type" "$member_name"
+        done
     done
-done
+fi
+
+# Compare dataset-level roles
+if [ -z "$dataset_permissions" ]; then
+    echo "Error: Failed to retrieve dataset-level permissions."
+else
+    echo "$dataset_permissions" | jq -c '.[] | select(.role != null)' | while read -r entry; do
+        role=$(echo "$entry" | jq -r '.role')
+        member_type=$(echo "$entry" | jq -r 'keys_unsorted[1]')
+        member=$(echo "$entry" | jq -r --arg key "$member_type" '.[$key]')
+        printf "%-30s %-30s %-20s %-60s\n" "Dataset-Level" "$role" "$member_type" "$member"
+    done
+fi
+
+echo
+echo "Completed comparison. Review roles and members listed under each scope for potential redundancies or missing roles."
