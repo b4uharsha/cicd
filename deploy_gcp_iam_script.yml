@@ -1,0 +1,53 @@
+---
+- name: Deploy and run GCP IAM update script
+  hosts: localhost  # Change this to localhost
+  tasks:
+
+    - name: Copy the update.sh script to the remote server
+      copy:
+        dest: /tmp/update.sh
+        content: |
+          #!/bin/bash
+          # Check if all arguments are provided
+          if [ "$#" -ne 4 ]; then
+            echo "Usage: ./update.sh <PROJECT_ID> <DATASET_ID> <EMAIL> <ROLE>"
+            exit 1
+          fi
+
+          # Assign arguments to variables
+          PROJECT_ID=$1         # First argument: GCP Project ID
+          DATASET_ID=$2         # Second argument: Dataset ID
+          MEMBER=$3             # Third argument: Email of the user or service account
+          ROLE=$4               # Fourth argument: Dataset-level role (READER, WRITER, OWNER)
+
+          # Retrieve the current IAM policy and save it to a temporary file
+          bq --project_id=$PROJECT_ID show --format=prettyjson $PROJECT_ID:$DATASET_ID > dataset_policy.json
+
+          # Update the JSON file to add the new member with jq
+          jq ".access += [{\"role\": \"$ROLE\", \"userByEmail\": \"$MEMBER\"}]" dataset_policy.json > updated_policy.json
+
+          # Apply the updated policy
+          bq --project_id=$PROJECT_ID update --source=updated_policy.json $PROJECT_ID:$DATASET_ID
+
+          # Clean up temporary files
+          rm dataset_policy.json updated_policy.json
+
+          echo "Access granted to $MEMBER with role $ROLE on dataset $DATASET_ID in project $PROJECT_ID."
+      
+    - name: Set the script as executable
+      file:
+        path: /tmp/update.sh
+        mode: '0755'
+
+    - name: Run the script with arguments
+      command: "/tmp/update.sh {{ project_id }} {{ dataset_id }} {{ email }} {{ role }}"
+      args:
+        chdir: /tmp  # Ensure the script is run in the correct directory
+      environment:
+        GOOGLE_APPLICATION_CREDENTIALS: "/path/to/your/service-account-key.json"
+
+    - name: Remove the script after execution
+      file:
+        path: /tmp/update.sh
+        state: absent
+
